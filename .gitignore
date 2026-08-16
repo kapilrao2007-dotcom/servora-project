@@ -1,0 +1,7 @@
+node_modules/
+.env
+server/data/db.json
+server/uploads/kyc/*
+!server/uploads/kyc/.gitkeep
+*.log
+.DS_Store

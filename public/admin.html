@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>SERVORA — Admin</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+:root{--navy-950:#060b16;--navy-900:#0a1424;--navy-800:#11213c;--gold-500:#c9a24b;--gold-400:#dcb964;--paper:#f4f0e6;--slate-400:#8994ab;--line:rgba(201,162,75,0.22);}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--navy-950);color:var(--paper);font-family:-apple-system,'Segoe UI',Manrope,sans-serif;min-height:100vh;}
+header{padding:20px 32px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;}
+header h1{font-size:18px;font-weight:700;}
+header h1 span{color:var(--gold-400);}
+.wrap{max-width:1100px;margin:0 auto;padding:32px;}
+#login-view{max-width:360px;margin:80px auto;}
+.field{margin-bottom:14px;}
+.field label{display:block;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--slate-400);margin-bottom:6px;}
+input,select{width:100%;background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:8px;padding:11px 14px;color:var(--paper);font-size:14px;}
+button{background:linear-gradient(135deg,var(--gold-400),var(--gold-500));color:var(--navy-950);border:none;padding:11px 20px;border-radius:8px;font-weight:700;cursor:pointer;font-size:13px;}
+button.secondary{background:transparent;border:1px solid var(--line);color:var(--paper);}
+button.danger{background:#c9524b;color:#fff;}
+.err{color:#e39;font-size:12.5px;margin-top:8px;min-height:16px;}
+.tabs{display:flex;gap:10px;margin-bottom:24px;}
+.tabs button{background:transparent;border:1px solid var(--line);color:var(--slate-400);}
+.tabs button.active{background:var(--gold-500);color:var(--navy-950);border-color:var(--gold-500);}
+.card{background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:14px;padding:22px;margin-bottom:16px;}
+.card .top{display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:12px;}
+.card h3{font-size:17px;}
+.meta{font-size:12.5px;color:var(--slate-400);}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px 24px;font-size:13px;margin:14px 0;}
+.grid2 b{color:var(--slate-400);font-weight:500;}
+.docs{display:flex;gap:10px;flex-wrap:wrap;margin:14px 0;}
+.docs a{border:1px solid var(--line);border-radius:8px;padding:8px 14px;font-size:12.5px;color:var(--gold-400);text-decoration:none;}
+.actions{display:flex;gap:10px;}
+.pill{padding:4px 12px;border-radius:99px;font-size:11px;font-weight:700;text-transform:uppercase;}
+.pill.pending{background:rgba(201,162,75,.15);color:var(--gold-400);}
+.pill.approved{background:rgba(90,200,120,.15);color:#7fd3a0;}
+.pill.rejected{background:rgba(220,80,80,.15);color:#f08b8b;}
+.empty{text-align:center;padding:60px 20px;color:var(--slate-400);}
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;}
+.stats-row .stat{background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:12px;padding:18px;}
+.stats-row .stat.gold{border-color:var(--gold-500);background:rgba(201,162,75,.08);}
+.stats-row .stat .n{font-size:22px;font-weight:700;margin-bottom:4px;}
+.stats-row .stat .l{font-size:11px;color:var(--slate-400);text-transform:uppercase;letter-spacing:.06em;}
+.etable{width:100%;border-collapse:collapse;font-size:13px;}
+.etable th{text-align:left;padding:10px 12px;color:var(--slate-400);font-size:11px;text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--line);}
+.etable td{padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.04);}
+.etable td.gold{color:var(--gold-400);font-weight:700;}
+@media(max-width:700px){.stats-row{grid-template-columns:1fr 1fr;}}
+</style>
+</head>
+<body>
+
+<div id="login-view">
+  <div class="wrap" style="padding-top:60px;">
+    <h1 style="text-align:center;margin-bottom:24px;font-size:22px;">SERVORA <span>Admin</span></h1>
+    <div class="field"><label>Admin email</label><input id="a-email" type="email" placeholder="admin@servora.in"></div>
+    <div class="field"><label>Password</label><input id="a-pass" type="password"></div>
+    <button id="a-login-btn" style="width:100%;">Log In</button>
+    <div class="err" id="a-err"></div>
+    <p style="font-size:11.5px;color:var(--slate-400);margin-top:16px;text-align:center;">Default admin credentials are set in server/.env (ADMIN_EMAIL / ADMIN_PASSWORD).</p>
+  </div>
+</div>
+
+<div id="app-view" style="display:none;">
+  <header>
+    <h1>SERVORA <span>Admin</span></h1>
+    <button class="secondary" id="logout-btn">Log Out</button>
+  </header>
+  <div class="wrap">
+    <div class="tabs">
+      <button data-status="pending" class="active">Pending</button>
+      <button data-status="approved">Approved</button>
+      <button data-status="rejected">Rejected</button>
+      <button data-status="earnings">Earnings</button>
+      <button data-status="withdrawals">Withdrawals</button>
+      <button data-status="refunds">Refunds</button>
+      <button data-status="services">Services</button>
+      <button data-status="areas">Areas</button>
+      <button data-status="coupons">Coupons</button>
+      <button data-status="settings">Settings</button>
+    </div>
+    <div id="list"></div>
+    <div id="earnings-view" style="display:none;"></div>
+    <div id="withdrawals-view" style="display:none;"></div>
+    <div id="refunds-view" style="display:none;"></div>
+    <div id="services-view" style="display:none;"></div>
+    <div id="areas-view" style="display:none;"></div>
+    <div id="coupons-view" style="display:none;"></div>
+    <div id="settings-view" style="display:none;"></div>
+  </div>
+</div>
+
+<script>
+let token = localStorage.getItem('servora_admin_token') || null;
+const err = m => { document.getElementById('a-err').textContent = m; };
+
+async function api(path, opts={}){
+  const headers = opts.headers || {};
+  if(!(opts.body instanceof FormData)) headers['Content-Type']='application/json';
+  if(token) headers['Authorization']='Bearer '+token;
+  const res = await fetch(path, {...opts, headers});
+  let data={}; try{ data = await res.json(); }catch(e){}
+  if(!res.ok) throw new Error(data.error || 'Request failed.');
+  return data;
+}
+
+function showApp(){ document.getElementById('login-view').style.display='none'; document.getElementById('app-view').style.display='block'; loadList('pending'); }
+
+document.getElementById('a-login-btn').addEventListener('click', async ()=>{
+  err('');
+  try{
+    const { token: t, user } = await api('/api/auth/login', { method:'POST', body: JSON.stringify({ email: document.getElementById('a-email').value, password: document.getElementById('a-pass').value }) });
+    if(!user.provider){ /* provider check n/a */ }
+    token = t; localStorage.setItem('servora_admin_token', t);
+    // confirm admin by attempting the admin-only endpoint
+    await api('/api/professionals/admin/list?status=pending');
+    showApp();
+  }catch(e){ err(e.message.includes('Admin') ? 'This account is not an admin.' : e.message); }
+});
+document.getElementById('logout-btn').addEventListener('click', ()=>{
+  token=null; localStorage.removeItem('servora_admin_token');
+  document.getElementById('app-view').style.display='none';
+  document.getElementById('login-view').style.display='block';
+});
+
+const ALL_VIEWS = ['list', 'earnings-view', 'withdrawals-view', 'refunds-view', 'services-view', 'areas-view', 'coupons-view', 'settings-view'];
+function showView(id){ ALL_VIEWS.forEach(v => document.getElementById(v).style.display = (v===id ? 'block':'none')); }
+
+document.querySelectorAll('.tabs button').forEach(b=>{
+  b.addEventListener('click', ()=>{
+    document.querySelectorAll('.tabs button').forEach(x=>x.classList.remove('active'));
+    b.classList.add('active');
+    if(b.dataset.status === 'earnings'){ showView('earnings-view'); loadEarnings(); }
+    else if(b.dataset.status === 'withdrawals'){ showView('withdrawals-view'); loadWithdrawals(); }
+    else if(b.dataset.status === 'refunds'){ showView('refunds-view'); loadRefunds(); }
+    else if(b.dataset.status === 'services'){ showView('services-view'); loadServices(); }
+    else if(b.dataset.status === 'areas'){ showView('areas-view'); loadAreas(); }
+    else if(b.dataset.status === 'coupons'){ showView('coupons-view'); loadCoupons(); }
+    else if(b.dataset.status === 'settings'){ showView('settings-view'); loadSettings(); }
+    else { showView('list'); loadList(b.dataset.status); }
+  });
+});
+
+async function loadWithdrawals(){
+  const el = document.getElementById('withdrawals-view');
+  el.innerHTML = '<div class="empty">Loading…</div>';
+  try{
+    const { withdrawals } = await api('/api/admin/withdrawals');
+    if(!withdrawals.length){ el.innerHTML = '<div class="empty">No withdrawal requests yet.</div>'; return; }
+    el.innerHTML = withdrawals.map(w => `
+      <div class="card">
+        <div class="top">
+          <div><h3>₹${w.amount}</h3><div class="meta">${w.professionalName} · ${w.category} · to ${w.payoutTo}</div></div>
+          <span class="pill ${w.status==='paid'?'approved':(w.status==='rejected'?'rejected':'pending')}">${w.status}</span>
+        </div>
+        <div class="meta" style="margin-bottom:12px;">Requested ${new Date(w.requestedAt).toLocaleString()}</div>
+        ${w.status==='pending' ? `
+        <div class="actions">
+          <button onclick="markWithdrawalPaid('${w.id}')">Mark Paid</button>
+          <button class="danger" onclick="rejectWithdrawal('${w.id}')">Reject</button>
+        </div>` : ''}
+      </div>
+    `).join('');
+  }catch(e){ el.innerHTML = '<div class="empty">'+e.message+'</div>'; }
+}
+async function markWithdrawalPaid(id){
+  try{ await api(`/api/admin/withdrawals/${id}/mark-paid`, { method:'POST' }); loadWithdrawals(); }
+  catch(e){ alert(e.message); }
+}
+async function rejectWithdrawal(id){
+  try{ await api(`/api/admin/withdrawals/${id}/reject`, { method:'POST' }); loadWithdrawals(); }
+  catch(e){ alert(e.message); }
+}
+
+async function loadRefunds(){
+  const el = document.getElementById('refunds-view');
+  el.innerHTML = '<div class="empty">Loading…</div>';
+  try{
+    const { refundRequests } = await api('/api/admin/refund-requests');
+    if(!refundRequests.length){ el.innerHTML = '<div class="empty">No refund requests yet.</div>'; return; }
+    el.innerHTML = refundRequests.map(r => `
+      <div class="card">
+        <div class="top">
+          <div><h3>₹${r.amount} — ${r.service||'Booking'}</h3><div class="meta">${r.customerName}</div></div>
+          <span class="pill ${r.status==='approved'?'approved':(r.status==='rejected'?'rejected':'pending')}">${r.status}</span>
+        </div>
+        <div class="meta" style="margin-bottom:12px;">"${r.reason}" — ${new Date(r.requestedAt).toLocaleString()}</div>
+        ${r.status==='pending' ? `
+        <div class="actions">
+          <button onclick="approveRefund('${r.id}')">Approve Refund</button>
+          <button class="danger" onclick="rejectRefund('${r.id}')">Reject</button>
+        </div>` : ''}
+      </div>
+    `).join('');
+  }catch(e){ el.innerHTML = '<div class="empty">'+e.message+'</div>'; }
+}
+async function approveRefund(id){
+  try{ await api(`/api/admin/refund-requests/${id}/approve`, { method:'POST' }); loadRefunds(); }
+  catch(e){ alert(e.message); }
+}
+async function rejectRefund(id){
+  try{ await api(`/api/admin/refund-requests/${id}/reject`, { method:'POST' }); loadRefunds(); }
+  catch(e){ alert(e.message); }
+}
+
+/* ---------- SERVICES ---------- */
+async function loadServices(){
+  const el = document.getElementById('services-view');
+  el.innerHTML = '<div class="empty">Loading…</div>';
+  try{
+    const { services } = await api('/api/admin/services');
+    el.innerHTML = `
+      <button onclick="showServiceForm()" style="background:var(--gold-500);color:var(--navy-950);border:none;padding:10px 20px;border-radius:8px;font-weight:700;margin-bottom:18px;cursor:pointer;">+ Add New Service</button>
+      <div id="service-form-slot"></div>
+      ${services.map(s => `
+        <div class="card">
+          <div class="top">
+            <div><h3><i class="fa-solid ${s.icon||'fa-screwdriver-wrench'}"></i> ${s.name} — ₹${s.price}</h3><div class="meta">${s.desc||''} · tag: ${s.tag}</div></div>
+            <span class="pill ${s.active?'approved':'rejected'}">${s.active?'Active':'Inactive'}</span>
+          </div>
+          <div class="actions">
+            <button onclick="showServiceForm('${s.id}')">Edit</button>
+            <button onclick="toggleServiceActive('${s.id}', ${!s.active})">${s.active?'Deactivate':'Activate'}</button>
+            <button class="danger" onclick="deleteService('${s.id}')">Delete</button>
+          </div>
+        </div>
+      `).join('')}
+    `;
+    window._servicesCache = services;
+  }catch(e){ el.innerHTML = '<div class="empty">'+e.message+'</div>'; }
+}
+
+function showServiceForm(id){
+  const svc = id ? (window._servicesCache||[]).find(s=>s.id===id) : null;
+  const slot = document.getElementById('service-form-slot');
+  slot.innerHTML = `
+    <div class="card" style="border-color:var(--gold-500);">
+      <h3 style="margin-bottom:14px;">${svc ? 'Edit Service' : 'New Service'}</h3>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+        <input id="sf-name" placeholder="Service name" value="${svc?svc.name:''}" style="padding:9px 12px;border-radius:8px;border:1px solid var(--line);background:transparent;color:var(--paper);">
+        <input id="sf-price" type="number" placeholder="Starting price (₹)" value="${svc?svc.price:''}" style="padding:9px 12px;border-radius:8px;border:1px solid var(--line);background:transparent;color:var(--paper);">
+        <input id="sf-icon" placeholder="FontAwesome icon e.g. fa-bolt" value="${svc?svc.icon:''}" style="padding:9px 12px;border-radius:8px;border:1px solid var(--line);background:transparent;color:var(--paper);">
+        <input id="sf-tag" placeholder="Tag e.g. popular, home, other" value="${svc?svc.tag:''}" style="padding:9px 12px;border-radius:8px;border:1px solid var(--line);background:transparent;color:var(--paper);">
+      </div>
+      <textarea id="sf-desc" placeholder="Short description" style="width:100%;padding:9px 12px;border-radius:8px;border:1px solid var(--line);background:transparent;color:var(--paper);margin-bottom:12px;">${svc?svc.desc:''}</textarea>
+      <button onclick="saveService(${svc?`'${svc.id}'`:'null'})" style="background:var(--gold-500);color:var(--navy-950);border:none;padding:9px 18px;border-radius:8px;font-weight:700;cursor:pointer;">Save</button>
+      <button onclick="document.getElementById('service-form-slot').innerHTML=''" style="background:transparent;border:1px solid var(--line);color:var(--slate-400);padding:9px 18px;border-radius:8px;margin-left:8px;cursor:pointer;">Cancel</button>
+    </div>`;
+}
+
+async function saveService(id){
+  const body = {
+    name: document.getElementById('sf-name').value.trim(),
+    price: document.getElementById('sf-price').value,
+    icon: document.getElementById('sf-icon').value.trim(),
+    tag: document.getElementById('sf-tag').value.trim(),
+    desc: document.getElementById('sf-desc').value.trim()
+  };
+  if(!body.name || !body.price) return alert('Name and price are required.');
+  try{
+    if(id) await api(`/api/admin/services/${id}`, { method:'PATCH', body: JSON.stringify(body) });
+    else await api('/api/admin/services', { method:'POST', body: JSON.stringify(body) });
+    loadServices();
+  }catch(e){ alert(e.message); }
+}
+async function toggleServiceActive(id, active){
+  try{ await api(`/api/admin/services/${id}`, { method:'PATCH', body: JSON.stringify({ active }) }); loadServices(); }
+  catch(e){ alert(e.message); }
+}
+async function deleteService(id){
+  if(!confirm('Delete this service permanently?')) return;
+  try{ await api(`/api/admin/services/${id}`, { method:'DELETE' }); loadServices(); }
+  catch(e){ alert(e.message); }
+}
+
+/* ---------- SETTINGS ---------- */
+async function loadSettings(){
+  const el = document.getElementById('settings-view');
+  el.innerHTML = '<div class="empty">Loading…</div>';
+  try{
+    const { settings } = await api('/api/admin/settings');
+    el.innerHTML = `
+      <div class="card" style="max-width:420px;">
+        <h3 style="margin-bottom:14px;">Platform Commission</h3>
+        <p class="meta" style="margin-bottom:14px;">Percentage SERVORA keeps from every completed booking. The rest goes to the professional.</p>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <input id="commission-input" type="number" min="0" max="50" value="${settings.commissionPct}" style="width:100px;padding:9px 12px;border-radius:8px;border:1px solid var(--line);background:transparent;color:var(--paper);font-size:16px;">
+          <span style="color:var(--slate-400);">%</span>
+          <button onclick="saveCommission()" style="background:var(--gold-500);color:var(--navy-950);border:none;padding:9px 18px;border-radius:8px;font-weight:700;cursor:pointer;margin-left:8px;">Save</button>
+        </div>
+        <p class="meta" style="margin-top:14px;">Applies to all bookings paid <em>after</em> this change — already-completed bookings keep their original split.</p>
+      </div>`;
+  }catch(e){ el.innerHTML = '<div class="empty">'+e.message+'</div>'; }
+}
+async function saveCommission(){
+  const val = document.getElementById('commission-input').value;
+  try{ await api('/api/admin/settings', { method:'PATCH', body: JSON.stringify({ commissionPct: Number(val) }) }); loadSettings(); alert('Commission rate updated.'); }
+  catch(e){ alert(e.message); }
+}
+
+/* ---------- AREAS / BLOCKS ---------- */
+async function loadAreas(){
+  const el = document.getElementById('areas-view');
+  el.innerHTML = '<div class="empty">Loading…</div>';
+  try{
+    const { blocks } = await api('/api/admin/blocks');
+    el.innerHTML = `
+      <p class="meta" style="margin-bottom:16px;max-width:520px;">These are the blocks/areas shown on the homepage coverage map and in the professional registration form. Add a new one when you expand to a new area — no code changes needed.</p>
+      <div style="display:flex;gap:10px;margin-bottom:18px;">
+        <input id="area-name-input" placeholder="New block/area name" style="flex:1;padding:9px 12px;border-radius:8px;border:1px solid var(--line);background:transparent;color:var(--paper);">
+        <button onclick="addArea()" style="background:var(--gold-500);color:var(--navy-950);border:none;padding:9px 20px;border-radius:8px;font-weight:700;cursor:pointer;">+ Add</button>
+      </div>
+      ${blocks.map(b => `
+        <div class="card">
+          <div class="top">
+            <div><h3>${b.name}${b.isHQ ? ' <span style="color:var(--gold-400);font-size:11px;">(HQ)</span>' : ''}</h3></div>
+            <span class="pill ${b.active?'approved':'rejected'}">${b.active?'Active':'Inactive'}</span>
+          </div>
+          <div class="actions">
+            ${!b.isHQ ? `<button onclick="setHQ('${b.id}')">Set as HQ</button>` : ''}
+            <button onclick="toggleAreaActive('${b.id}', ${!b.active})">${b.active?'Deactivate':'Activate'}</button>
+            <button class="danger" onclick="deleteArea('${b.id}')">Delete</button>
+          </div>
+        </div>
+      `).join('')}
+    `;
+  }catch(e){ el.innerHTML = '<div class="empty">'+e.message+'</div>'; }
+}
+async function addArea(){
+  const name = document.getElementById('area-name-input').value.trim();
+  if(!name) return alert('Enter an area name.');
+  try{ await api('/api/admin/blocks', { method:'POST', body: JSON.stringify({ name }) }); loadAreas(); }
+  catch(e){ alert(e.message); }
+}
+async function setHQ(id){
+  try{ await api(`/api/admin/blocks/${id}`, { method:'PATCH', body: JSON.stringify({ isHQ: true }) }); loadAreas(); }
+  catch(e){ alert(e.message); }
+}
+async function toggleAreaActive(id, active){
+  try{ await api(`/api/admin/blocks/${id}`, { method:'PATCH', body: JSON.stringify({ active }) }); loadAreas(); }
+  catch(e){ alert(e.message); }
+}
+async function deleteArea(id){
+  if(!confirm('Delete this block/area permanently?')) return;
+  try{ await api(`/api/admin/blocks/${id}`, { method:'DELETE' }); loadAreas(); }
+  catch(e){ alert(e.message); }
+}
+
+/* ---------- COUPONS ---------- */
+async function loadCoupons(){
+  const el = document.getElementById('coupons-view');
+  el.innerHTML = '<div class="empty">Loading…</div>';
+  try{
+    const { coupons } = await api('/api/admin/coupons');
+    el.innerHTML = `
+      <button onclick="showCouponForm()" style="background:var(--gold-500);color:var(--navy-950);border:none;padding:10px 20px;border-radius:8px;font-weight:700;margin-bottom:18px;cursor:pointer;">+ Create Coupon</button>
+      <div id="coupon-form-slot"></div>
+      ${coupons.length ? coupons.map(c => `
+        <div class="card">
+          <div class="top">
+            <div>
+              <h3 style="font-family:'JetBrains Mono',monospace;">${c.code}</h3>
+              <div class="meta">${c.type==='percent' ? c.value+'% off'+(c.maxDiscount?' (max ₹'+c.maxDiscount+')':'') : '₹'+c.value+' off'} · min order ₹${c.minOrderValue||0} · used ${c.usedCount}${c.usageLimit?'/'+c.usageLimit:''}${c.expiresAt ? ' · expires '+new Date(c.expiresAt).toLocaleDateString() : ''}</div>
+            </div>
+            <span class="pill ${c.active?'approved':'rejected'}">${c.active?'Active':'Inactive'}</span>
+          </div>
+          <div class="actions">
+            <button onclick="toggleCouponActive('${c.id}', ${!c.active})">${c.active?'Deactivate':'Activate'}</button>
+            <button class="danger" onclick="deleteCoupon('${c.id}')">Delete</button>
+          </div>
+        </div>
+      `).join('') : '<div class="empty">No coupons yet.</div>'}
+    `;
+  }catch(e){ el.innerHTML = '<div class="empty">'+e.message+'</div>'; }
+}
+
+function showCouponForm(){
+  document.getElementById('coupon-form-slot').innerHTML = `
+    <div class="card" style="border-color:var(--gold-500);">
+      <h3 style="margin-bottom:14px;">New Coupon</h3>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+        <input id="cf-code" placeholder="Code, e.g. WELCOME50" style="text-transform:uppercase;padding:9px 12px;border-radius:8px;border:1px solid var(--line);background:transparent;color:var(--paper);">
+        <select id="cf-type" style="padding:9px 12px;border-radius:8px;border:1px solid var(--line);background:var(--navy-900);color:var(--paper);">
+          <option value="percent">Percent off</option>
+          <option value="flat">Flat ₹ off</option>
+        </select>
+        <input id="cf-value" type="number" placeholder="Value (e.g. 20 for 20% or 100 for ₹100)" style="padding:9px 12px;border-radius:8px;border:1px solid var(--line);background:transparent;color:var(--paper);">
+        <input id="cf-maxdiscount" type="number" placeholder="Max discount ₹ (percent only, optional)" style="padding:9px 12px;border-radius:8px;border:1px solid var(--line);background:transparent;color:var(--paper);">
+        <input id="cf-minorder" type="number" placeholder="Minimum order value ₹ (optional)" style="padding:9px 12px;border-radius:8px;border:1px solid var(--line);background:transparent;color:var(--paper);">
+        <input id="cf-limit" type="number" placeholder="Usage limit (optional)" style="padding:9px 12px;border-radius:8px;border:1px solid var(--line);background:transparent;color:var(--paper);">
+        <input id="cf-expiry" type="date" style="padding:9px 12px;border-radius:8px;border:1px solid var(--line);background:transparent;color:var(--paper);">
+      </div>
+      <button onclick="saveCoupon()" style="background:var(--gold-500);color:var(--navy-950);border:none;padding:9px 18px;border-radius:8px;font-weight:700;cursor:pointer;">Create</button>
+      <button onclick="document.getElementById('coupon-form-slot').innerHTML=''" style="background:transparent;border:1px solid var(--line);color:var(--slate-400);padding:9px 18px;border-radius:8px;margin-left:8px;cursor:pointer;">Cancel</button>
+    </div>`;
+}
+
+async function saveCoupon(){
+  const body = {
+    code: document.getElementById('cf-code').value.trim(),
+    type: document.getElementById('cf-type').value,
+    value: document.getElementById('cf-value').value,
+    maxDiscount: document.getElementById('cf-maxdiscount').value || null,
+    minOrderValue: document.getElementById('cf-minorder').value || null,
+    usageLimit: document.getElementById('cf-limit').value || null,
+    expiresAt: document.getElementById('cf-expiry').value || null
+  };
+  if(!body.code || !body.value) return alert('Code and value are required.');
+  try{ await api('/api/admin/coupons', { method:'POST', body: JSON.stringify(body) }); loadCoupons(); }
+  catch(e){ alert(e.message); }
+}
+async function toggleCouponActive(id, active){
+  try{ await api(`/api/admin/coupons/${id}`, { method:'PATCH', body: JSON.stringify({ active }) }); loadCoupons(); }
+  catch(e){ alert(e.message); }
+}
+async function deleteCoupon(id){
+  if(!confirm('Delete this coupon permanently?')) return;
+  try{ await api(`/api/admin/coupons/${id}`, { method:'DELETE' }); loadCoupons(); }
+  catch(e){ alert(e.message); }
+}
+
+
+async function loadEarnings(){
+  const el = document.getElementById('earnings-view');
+  el.innerHTML = '<div class="empty">Loading…</div>';
+  try{
+    const { summary, rows } = await api('/api/admin/earnings');
+    el.innerHTML = `
+      <div class="stats-row">
+        <div class="stat"><div class="n">₹${summary.totalCollected}</div><div class="l">Total Collected</div></div>
+        <div class="stat gold"><div class="n">₹${summary.totalCommission}</div><div class="l">Your 15% Commission</div></div>
+        <div class="stat"><div class="n">₹${summary.totalOwedToProfessionals}</div><div class="l">Owed to Professionals</div></div>
+        <div class="stat"><div class="n">${summary.totalBookings}</div><div class="l">Paid Bookings</div></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin:22px 0 12px;">
+        <p style="font-size:12px;color:var(--slate-400);max-width:520px;">This build doesn't yet match bookings to a specific professional, so "owed to professionals" is a total pool, not a per-person breakdown. Export the CSV below to process manual bank/UPI transfers.</p>
+        <button onclick="window.open('/api/admin/earnings/export.csv?token='+token)">⬇ Export CSV</button>
+      </div>
+      <table class="etable">
+        <thead><tr><th>Date</th><th>Customer</th><th>Service</th><th>Amount</th><th>Commission</th><th>Payout</th><th>Status</th></tr></thead>
+        <tbody>
+          ${rows.length ? rows.map(r=>`<tr>
+            <td>${new Date(r.date).toLocaleDateString()}</td>
+            <td>${r.customerName}</td>
+            <td>${r.service}</td>
+            <td>₹${r.amount}</td>
+            <td class="gold">₹${r.commission}</td>
+            <td>₹${r.professionalPayout}</td>
+            <td><span class="pill ${r.status==='completed'?'approved':'pending'}">${r.status}</span></td>
+          </tr>`).join('') : '<tr><td colspan="7" style="text-align:center;color:var(--slate-400);padding:30px;">No paid bookings yet.</td></tr>'}
+        </tbody>
+      </table>
+    `;
+  }catch(e){ el.innerHTML = '<div class="empty">'+e.message+'</div>'; }
+}
+
+async function loadList(status){
+  const list = document.getElementById('list');
+  list.innerHTML = '<div class="empty">Loading…</div>';
+  try{
+    const { professionals } = await api('/api/professionals/admin/list?status='+status);
+    if(!professionals.length){ list.innerHTML = '<div class="empty">No '+status+' applications.</div>'; return; }
+    list.innerHTML = professionals.map(p => `
+      <div class="card">
+        <div class="top">
+          <div><h3>${p.name}</h3><div class="meta">${p.category} · ${p.city} Block${p.village ? ' · '+p.village : ''} · ${p.pincode}</div></div>
+          <span class="pill ${p.status}">${p.status}</span>
+        </div>
+        <div class="grid2">
+          <div><b>Mobile:</b> +91 ${p.mobile}</div>
+          <div><b>Email:</b> ${p.email||'—'}</div>
+          <div><b>Experience:</b> ${p.experience||'—'} yrs</div>
+          <div><b>Skills:</b> ${p.skills||'—'}</div>
+          <div><b>Bank / UPI:</b> ${p.upiId || p.bankAccount || '—'}</div>
+          <div><b>Applied:</b> ${new Date(p.createdAt).toLocaleDateString()}</div>
+        </div>
+        <div class="docs">
+          <a target="_blank" href="/api/professionals/admin/${p.id}/file/aadhaar?token=${token}">View Aadhaar</a>
+          <a target="_blank" href="/api/professionals/admin/${p.id}/file/pan?token=${token}">View PAN</a>
+          <a target="_blank" href="/api/professionals/admin/${p.id}/file/selfie?token=${token}">View Selfie</a>
+        </div>
+        ${p.status==='pending' ? `
+        <div class="actions">
+          <button onclick="decide('${p.id}','approved')">Approve</button>
+          <button class="danger" onclick="decide('${p.id}','rejected')">Reject</button>
+        </div>` : ''}
+      </div>
+    `).join('');
+  }catch(e){ list.innerHTML = '<div class="empty">'+e.message+'</div>'; }
+}
+
+async function decide(id, decision){
+  try{
+    await api(`/api/professionals/admin/${id}/decision`, { method:'POST', body: JSON.stringify({ decision }) });
+    loadList(document.querySelector('.tabs button.active').dataset.status);
+  }catch(e){ alert(e.message); }
+}
+
+if(token){ api('/api/professionals/admin/list?status=pending').then(showApp).catch(()=>{ token=null; localStorage.removeItem('servora_admin_token'); }); }
+</script>
+</body>
+</html>
