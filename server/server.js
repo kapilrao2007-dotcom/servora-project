@@ -20,7 +20,21 @@ const app = express();
 // Security headers. CSP is disabled because the frontend uses plain inline
 // <script> tags (no build step / nonces) — the other headers (frame options,
 // no-sniff, HSTS, etc.) still apply and don't require any frontend changes.
-app.use(helmet({ contentSecurityPolicy: false, crossOriginEmbedderPolicy: false }));
+//
+// IMPORTANT (popup fix): Google Sign-In and Razorpay Checkout both open popup
+// windows. Helmet's default "Cross-Origin-Opener-Policy: same-origin" cuts the
+// link between the popup and the main page, which leaves the popup stuck on a
+// blank page (about:blank / white screen). "same-origin-allow-popups" keeps
+// the protection but lets those popups talk back to the page.
+app.use(helmet({
+  contentSecurityPolicy: false,
+  crossOriginEmbedderPolicy: false,
+  crossOriginOpenerPolicy: { policy: 'same-origin-allow-popups' },
+  // Helmet default is "no-referrer"; Google/Razorpay work better when the origin is sent.
+  referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
+  // Allow cross-origin resources (Google avatars, scripts, etc.) to load normally.
+  crossOriginResourcePolicy: { policy: 'cross-origin' }
+}));
 
 // CORS: by default only the app's own origin is allowed. Set ALLOWED_ORIGINS
 // (comma-separated) in .env if the frontend is ever served from a different
