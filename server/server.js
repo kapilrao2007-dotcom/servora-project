@@ -81,6 +81,7 @@ app.use('/api/notifications', require('./routes/notifications'));
 app.use('/api/services', require('./routes/services'));
 app.use('/api/blocks', require('./routes/blocks'));
 app.use('/api/wallet', require('./routes/wallet'));
+app.use('/api/contact', require('./routes/contact'));
 
 app.get('/api/health', (req, res) => res.json({ ok: true, service: 'SERVORA API', time: Date.now() }));
 

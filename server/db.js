@@ -56,6 +56,7 @@ const DEFAULTS = {
   ],
   coupons: [],          // {id, code, type: percent|flat, value, maxDiscount, minOrderValue, usageLimit, usedCount, expiresAt, active}
   referrals: [],        // {id, referrerUserId, refereeUserId, rewardAmount, status: pending|rewarded, createdAt}
+  contactMessages: [],  // {id, name, phone, email, role, message, status: new|read, createdAt}
   messages: []          // {id, bookingId, senderId, senderRole: customer|professional, text, createdAt}
 };
 
